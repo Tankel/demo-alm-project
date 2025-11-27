@@ -11,11 +11,37 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_branch == 'main' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Create GitHub Issue for CI Failure
+      - uses: actions/checkout@v4
+
+      - name: Crear archivo dinámico para el incidente
+        run: |
+          echo "# CI Failure Incident" > incident.md
+          echo "" >> incident.md
+          echo "**Descripción:**" >> incident.md
+          echo "El workflow de CI falló en la rama \`main\`." >> incident.md
+          echo "" >> incident.md
+          echo "**Commit:**" >> incident.md
+          echo "${{ github.event.workflow_run.head_sha }}" >> incident.md
+          echo "" >> incident.md
+          echo "**Run fallido:**" >> incident.md
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}" >> incident.md
+          echo "" >> incident.md
+          echo "**Posible causa:**" >> incident.md
+          echo "- Error en pasos del CI" >> incident.md
+          echo "- Dependencias faltantes" >> incident.md
+          echo "- Configuración inválida" >> incident.md
+          echo "" >> incident.md
+          echo "**Acciones sugeridas:**" >> incident.md
+          echo "- Revisar logs del workflow fallido" >> incident.md
+          echo "- Actualizar configuración o corregir pasos" >> incident.md
+          echo "- Verificar modificaciones recientes" >> incident.md
+
+      - name: Crear GitHub Issue
         uses: peter-evans/create-issue-from-file@v4
         with:
           title: "[INCIDENT][CI FAILURE] Tests fallaron en main - ${{ github.event.workflow_run.head_sha }}"
-          content-filepath: .github/ISSUE_TEMPLATE/auto_ci_incident.md
-          labels: incident, ci-failure, triage-needed
+          content-filepath: incident.md
+          labels: |
+            incident
+            ci-failure
+            triage-needed
